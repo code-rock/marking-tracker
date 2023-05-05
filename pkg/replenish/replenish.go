@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/disintegration/imaging"
 	"io/ioutil"
+	"time"
 )
 
 func changeImg(id int, count int, folder string) {
@@ -29,16 +30,26 @@ func changeImg(id int, count int, folder string) {
 	}
 }
 
-func ReplenishImageSet(folder string, count int) {
-	files, err := ioutil.ReadDir(fmt.Sprintf("./images/%s", folder))
-	if err != nil {
-		log.Fatal(err)
-	}
-	for id, _ := range files {
-		for j:= 1; j <= count; j++ {
-			changeImg(id + 1, j, folder)
-		}
+func ReplenishImageSet(count int) {
+	folders, err := ioutil.ReadDir("./images")
+    if err != nil {
+        log.Fatal(err)
     }
+	for _, folder := range folders {
+		files, err := ioutil.ReadDir(fmt.Sprintf("./images/%s", folder.Name()))
+		if err != nil {
+			log.Fatal(err)
+		}
+		for id, _ := range files {
+			for j:= 1; j <= count; j++ {
+				go func (i, j int, folder string) {
+					changeImg(i + 1, j, folder)
+				}(id, j, folder.Name())
+			}
+		}
+	}
+
+	time.Sleep(1000* time.Millisecond)
 }
 
 // folders, err := ioutil.ReadDir("./images")
