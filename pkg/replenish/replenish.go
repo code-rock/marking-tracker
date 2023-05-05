@@ -8,10 +8,12 @@ import (
 	"github.com/disintegration/imaging"
 	"io/ioutil"
 	"time"
+	"strings"
+	"os"
 )
 
-func changeImg(id int, count int, folder string) {
-	src, err := imaging.Open(fmt.Sprintf("images/%s/%d.png", folder, id ))
+func changeImg(file string, count int, folder string) {
+	src, err := imaging.Open(fmt.Sprintf("images/%s/%s", folder, file))
 	if err != nil {
 		log.Fatalf("failed to open image: %v", err)
 	}
@@ -23,8 +25,9 @@ func changeImg(id int, count int, folder string) {
 	img1 = imaging.Resize(img1, 360, 360, imaging.Lanczos)
 	img1 = imaging.PasteCenter(src, img1) 
 	img1 = imaging.AdjustSigmoid(img1, rand.Float64(), rand.Float64() * 10)
+	img1 = imaging.Grayscale(img1)
 
-	err = imaging.Save(img1, fmt.Sprintf("images/%s/out_%d%d.png", folder, id, count))
+	err = imaging.Save(img1, fmt.Sprintf("images/%s/out_%d%s", folder,  count, file))
 	if err != nil {
 		log.Fatalf("failed to save image: %v", err)
 	}
@@ -40,30 +43,40 @@ func ReplenishImageSet(count int) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		for id, _ := range files {
-			for j:= 1; j <= count; j++ {
-				go func (i, j int, folder string) {
-					changeImg(i + 1, j, folder)
-				}(id, j, folder.Name())
+		for _, file := range files {
+			if !strings.HasPrefix(file.Name(), "out_") {
+				for j:= 0; j < count; j++ {
+					go func (j int, file, folder string) {
+						changeImg(file, j, folder)
+					}(j, file.Name(), folder.Name())
+				}
 			}
 		}
 	}
 
-	time.Sleep(1000* time.Millisecond)
+	time.Sleep(5000* time.Millisecond)
 }
 
-// folders, err := ioutil.ReadDir("./images")
-    // if err != nil {
-    //     log.Fatal(err)
-    // }
+func RemoveAdditional() {
+	folders, err := ioutil.ReadDir("./images")
+    if err != nil {
+        log.Fatal(err)
+    }
+	for _, folder := range folders {
+		files, err := ioutil.ReadDir(fmt.Sprintf("./images/%s", folder.Name()))
+		if err != nil {
+			log.Fatal(err)
+		}
+		for _, file := range files {
+			fmt.Println(file.Name())
+			fmt.Println(strings.HasPrefix(file.Name(), "out") )
+			if strings.HasPrefix(file.Name(), "out") {
+				go func (folder, file string) {
+					os.Remove(fmt.Sprintf("./images/%s/%s", folder, file))
+				} (folder.Name(), file.Name())
+			}
+		}
+	}
 
-    // for _, folder := range folders {
-	// 	files, err_files := ioutil.ReadDir(fmt.Sprintf("./images/%s", folder.Name()))
-	// 	if err_files != nil {
-	// 		log.Fatal(err_files)
-	// 	}
-
-	// 	for _, file := range files {
-	// 		fmt.Println(file.Name(), file.IsDir())
-	// 	}
-    // }
+	time.Sleep(10000* time.Millisecond)
+}
