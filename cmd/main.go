@@ -2,7 +2,7 @@ package main
 
 import (
 	// "replenish"
-	// "web"
+	"web"
 	// "network"
 	"webcam"
 )
@@ -10,7 +10,7 @@ import (
 func main() {
 	// replenish.ReplenishImageSet(5)
 	//replenish.RemoveAdditional()
-	// web.Listen()
+    web.Listen()
 	// network.Start()
 	webcam.Connect()
 }
