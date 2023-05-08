@@ -1,15 +1,16 @@
 package main
 
 import (
-	"replenish"
-	// "web"
+	// "replenish"
+	"web"
 	// "network"
-	// "webcam"
+	"webcam"
 )
 
 func main() {
-	replenish.ReplenishImageSet(5)
-	// web.Listen()
+	// replenish.ReplenishImageSet(5)
+	//replenish.RemoveAdditional()
+    web.Listen()
 	// network.Start()
-	// webcam.Connect()
+	webcam.Connect()
 }
